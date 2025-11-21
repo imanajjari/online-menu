@@ -1,0 +1,270 @@
+{% extends 'dashboard/base_dashboard.html' %}
+{% load static %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/lightbox2@2.11.4/dist/css/lightbox.min.css">
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+{{ block.super }}
+{% endblock %}
+
+{% block dashboard_content %}
+<div class="max-w-5xl">
+    <div class="mb-8">
+        <h1 class="text-3xl font-bold text-gray-900 mb-2">
+            {% if item %}✏️ ویرایش محصول{% else %}➕ محصول جدید{% endif %}
+        </h1>
+        <p class="text-gray-600">اطلاعات محصول خود را وارد کنید</p>
+    </div>
+
+    <form method="post" enctype="multipart/form-data" class="bg-white rounded-3xl shadow-lg p-8 space-y-6" novalidate>
+        {% csrf_token %}
+        
+        <!-- Basic Info -->
+        <div class="grid md:grid-cols-2 gap-6">
+            {% for field in form %}
+                {% if field.name not in 'gallery_images,available_days_list,is_full_time,available_from,available_to,display_start,display_end' %}
+                <div class="space-y-2">
+                    <label class="block text-sm font-semibold text-gray-700">
+                        {{ field.label }}
+                        {% if field.field.required %}<span class="text-red-500">*</span>{% endif %}
+                    </label>
+                    {{ field }}
+                    {% if field.help_text %}
+                    <p class="text-xs text-gray-500">{{ field.help_text }}</p>
+                    {% endif %}
+                    {% for error in field.errors %}
+                    <p class="text-sm text-red-600">{{ error }}</p>
+                    {% endfor %}
+                </div>
+                {% endif %}
+            {% endfor %}
+        </div>
+
+        <!-- Full Width Fields -->
+        <div class="space-y-2">
+            <label class="block text-sm font-semibold text-gray-700">توضیحات</label>
+            {{ form.description }}
+        </div>
+
+        <div class="space-y-2">
+            <label class="block text-sm font-semibold text-gray-700">مواد تشکیل‌دهنده</label>
+            {{ form.ingredients }}
+        </div>
+
+        <!-- Time Settings -->
+        <div class="bg-gray-50 rounded-2xl p-6 space-y-4">
+            <h3 class="text-lg font-bold text-gray-900 mb-4">⏰ تنظیمات زمان ارائه</h3>
+            
+            <div class="space-y-2">
+                <label class="flex items-center gap-2">
+                    {{ form.is_full_time }}
+                    <span class="text-sm font-semibold text-gray-700">همه روزها (فول تایم)</span>
+                </label>
+            </div>
+
+            <div id="time-settings" class="grid md:grid-cols-2 gap-4 {% if form.is_full_time.value %}hidden{% endif %}">
+                <div class="space-y-2">
+                    <label class="block text-sm font-semibold text-gray-700">روزهای ارائه</label>
+                    <div class="flex flex-wrap gap-3 p-4 bg-white rounded-xl border-2 border-gray-200">
+                        {% for choice in form.available_days_list %}
+                        <label class="flex items-center gap-2 cursor-pointer">
+                            {{ choice.tag }}
+                            <span class="text-sm text-gray-700">{{ choice.choice_label }}</span>
+                        </label>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="space-y-2">
+                        <label class="block text-sm font-semibold text-gray-700">ساعت شروع</label>
+                        {{ form.available_from }}
+                    </div>
+                    <div class="space-y-2">
+                        <label class="block text-sm font-semibold text-gray-700">ساعت پایان</label>
+                        {{ form.available_to }}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Date Range -->
+        <div class="grid md:grid-cols-2 gap-4">
+            <div class="space-y-2">
+                <label class="block text-sm font-semibold text-gray-700">تاریخ شروع نمایش</label>
+                <div class="relative">
+                    <input type="text" id="id_display_start_persian" class="persian-date-input w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 outline-none transition-all cursor-pointer" placeholder="1403/01/01" readonly>
+                    {{ form.display_start }}
+                    <style>
+                        #id_display_start { position: absolute; opacity: 0; pointer-events: none; }
+                    </style>
+                </div>
+            </div>
+            <div class="space-y-2">
+                <label class="block text-sm font-semibold text-gray-700">تاریخ پایان نمایش</label>
+                <div class="relative">
+                    <input type="text" id="id_display_end_persian" class="persian-date-input w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 outline-none transition-all cursor-pointer" placeholder="1403/12/29" readonly>
+                    {{ form.display_end }}
+                    <style>
+                        #id_display_end { position: absolute; opacity: 0; pointer-events: none; }
+                    </style>
+                </div>
+            </div>
+        </div>
+
+        <!-- Gallery Images Upload -->
+        <div class="space-y-2">
+            <label class="block text-sm font-semibold text-gray-700">
+                {{ form.gallery_images.label }}
+            </label>
+            <input type="file" name="gallery_images" multiple accept="image/*" 
+                   class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100">
+            {% if form.gallery_images.help_text %}
+            <p class="text-xs text-gray-500">{{ form.gallery_images.help_text }}</p>
+            {% endif %}
+        </div>
+
+        <!-- Existing Gallery -->
+        {% if formset %}
+        <div class="border-t border-gray-200 pt-6">
+            <h3 class="text-lg font-bold text-gray-900 mb-4">🖼️ گالری موجود</h3>
+            {{ formset.management_form }}
+            <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                {% for gallery_form in formset %}
+                <div class="bg-gray-50 rounded-2xl p-4 space-y-3 border-2 border-gray-200">
+                    {% for hidden in gallery_form.hidden_fields %}{{ hidden }}{% endfor %}
+                    
+                    <div class="relative aspect-square rounded-xl overflow-hidden bg-gray-200">
+                        {% if gallery_form.instance.image %}
+                        <a href="{{ gallery_form.instance.image.url }}" data-lightbox="gallery" data-title="{{ gallery_form.instance.caption|default:item.name }}">
+                            <img src="{{ gallery_form.instance.image.url }}" alt="{{ gallery_form.instance.caption }}" 
+                                 class="w-full h-full object-cover hover:scale-110 transition-transform cursor-pointer">
+                        </a>
+                        {% else %}
+                        <div class="w-full h-full flex items-center justify-center">
+                            <span class="text-4xl opacity-30">🖼️</span>
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    <div class="space-y-2">
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-700 mb-1">تغییر عکس</label>
+                            {{ gallery_form.image }}
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-700 mb-1">توضیح</label>
+                            {{ gallery_form.caption }}
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-700 mb-1">ترتیب</label>
+                            {{ gallery_form.order }}
+                        </div>
+                        <label class="flex items-center gap-2 text-sm text-red-600 cursor-pointer">
+                            {{ gallery_form.DELETE }}
+                            <span>🗑️ حذف</span>
+                        </label>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Actions -->
+        <div class="flex gap-4 pt-6 border-t border-gray-200">
+            <button type="submit" 
+                    class="flex-1 px-6 py-3 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition-colors font-semibold shadow-lg hover:shadow-xl">
+                💾 ذخیره محصول
+            </button>
+            <a href="{% url 'dashboard:item_list' %}" 
+               class="px-6 py-3 bg-gray-100 text-gray-700 rounded-xl hover:bg-gray-200 transition-colors font-semibold">
+                انصراف
+            </a>
+        </div>
+    </form>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/lightbox2@2.11.4/dist/js/lightbox.min.js"></script>
+<script>
+    // Toggle time settings based on is_full_time checkbox
+    document.getElementById('id_is_full_time').addEventListener('change', function() {
+        const timeSettings = document.getElementById('time-settings');
+        if (this.checked) {
+            timeSettings.classList.add('hidden');
+        } else {
+            timeSettings.classList.remove('hidden');
+        }
+    });
+
+    // Style all form inputs
+    document.querySelectorAll('input, select, textarea').forEach(function(input) {
+        if (input.type !== 'checkbox' && input.type !== 'file' && input.type !== 'hidden') {
+            input.classList.add('w-full', 'px-4', 'py-3', 'rounded-xl', 'border-2', 'border-gray-200', 'focus:border-indigo-500', 'focus:ring-2', 'focus:ring-indigo-200', 'outline-none', 'transition-all');
+        }
+    });
+
+    // Preview uploaded images
+    document.querySelector('input[name="gallery_images"]')?.addEventListener('change', function(e) {
+        const files = e.target.files;
+        if (files.length > 0) {
+            console.log(files.length + ' فایل انتخاب شد');
+        }
+    });
+    
+    // Initialize Persian Date Picker for date fields
+    $(document).ready(function() {
+        // Display Start Date
+        const displayStartPersian = $('#id_display_start_persian');
+        const displayStartHidden = $('#id_display_start');
+        
+        if (displayStartPersian.length && displayStartHidden.length) {
+            // Convert existing value to Persian
+            if (displayStartHidden.val()) {
+                try {
+                    const gregorianDate = new Date(displayStartHidden.val());
+                    const persian = new persianDate(gregorianDate);
+                    displayStartPersian.val(persian.format('YYYY/MM/DD'));
+                } catch(e) {}
+            }
+            
+            displayStartPersian.pDatepicker({
+                observer: true,
+                format: 'YYYY/MM/DD',
+                altField: displayStartHidden,
+                altFormat: 'YYYY-MM-DD',
+                calendarType: 'persian',
+                timePicker: { enabled: false },
+                initialValue: false,
+                autoClose: true
+            });
+        }
+        
+        // Display End Date
+        const displayEndPersian = $('#id_display_end_persian');
+        const displayEndHidden = $('#id_display_end');
+        
+        if (displayEndPersian.length && displayEndHidden.length) {
+            // Convert existing value to Persian
+            if (displayEndHidden.val()) {
+                try {
+                    const gregorianDate = new Date(displayEndHidden.val());
+                    const persian = new persianDate(gregorianDate);
+                    displayEndPersian.val(persian.format('YYYY/MM/DD'));
+                } catch(e) {}
+            }
+            
+            displayEndPersian.pDatepicker({
+                observer: true,
+                format: 'YYYY/MM/DD',
+                altField: displayEndHidden,
+                altFormat: 'YYYY-MM-DD',
+                calendarType: 'persian',
+                timePicker: { enabled: false },
+                initialValue: false,
+                autoClose: true
+            });
+        }
+    });
+</script>
+{% endblock %}

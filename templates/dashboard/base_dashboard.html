@@ -1,0 +1,369 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}داشبورد مدیریت | {{ block.super }}{% endblock %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="https://unpkg.com/persian-datepicker@1.2.0/dist/css/persian-datepicker.min.css">
+<script>
+    // Ensure jQuery is loaded before datepicker
+    if (typeof jQuery === 'undefined') {
+        document.write('<script src="https://code.jquery.com/jquery-3.7.1.min.js"><\/script>');
+    }
+</script>
+{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50">
+    <!-- Mobile Menu Toggle Button -->
+    <button id="dashboard-mobile-toggle" class="md:hidden fixed top-20 right-4 z-20 bg-indigo-600 text-white p-3 rounded-full shadow-lg hover:bg-indigo-700 transition-colors">
+        <svg id="dashboard-menu-icon" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+        </svg>
+        <svg id="dashboard-close-icon" class="w-6 h-6 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+        </svg>
+    </button>
+    
+    <!-- Mobile Overlay -->
+    <div id="dashboard-overlay" class="md:hidden fixed left-0 right-0 bottom-0 bg-black/50 backdrop-blur-sm z-30 opacity-0 transition-opacity duration-300 pointer-events-none" style="top: 64px;"></div>
+    
+    <!-- Dashboard Sidebar -->
+    <aside id="dashboard-sidebar" class="fixed right-0 top-16 bottom-0 w-64 bg-white shadow-lg z-40 overflow-y-auto transform transition-transform duration-300 md:translate-x-0 translate-x-full">
+        <!-- Close Button (Mobile) -->
+        <button id="dashboard-close-btn" type="button" class="md:hidden absolute top-4 right-4 z-50 bg-gray-100 hover:bg-gray-200 active:bg-gray-300 p-2 rounded-full transition-colors cursor-pointer">
+            <svg class="w-5 h-5 text-gray-700 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
+        </button>
+        
+        <div class="p-6 border-b border-gray-200">
+            <div class="flex items-center gap-3 mb-2">
+                {% if business.logo %}
+                <img src="{{ business.logo.url }}" alt="{{ business.name }}" class="w-12 h-12 rounded-xl object-cover">
+                {% else %}
+                <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-indigo-400 to-purple-500 flex items-center justify-center text-white font-bold text-xl">
+                    {{ business.name|first|default:"ک" }}
+                </div>
+                {% endif %}
+                <div class="flex-1 min-w-0">
+                    <h3 class="font-bold text-gray-900 truncate">{{ business.name|default:"کسب‌وکار من" }}</h3>
+                    {% if business.tagline %}
+                    <p class="text-xs text-gray-500 truncate">{{ business.tagline }}</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <nav class="p-4 space-y-2">
+            {% with request.resolver_match.url_name as current_url %}
+            <a href="{% url 'dashboard:home' %}" 
+               class="flex items-center gap-3 px-4 py-3 rounded-xl transition-all {% if current_url == 'home' %}bg-indigo-100 text-indigo-700 font-semibold{% else %}text-gray-600 hover:bg-gray-100{% endif %}">
+                <span class="text-xl">📊</span>
+                <span>نمای کلی</span>
+            </a>
+            <a href="{% url 'dashboard:business_edit' %}" 
+               class="flex items-center gap-3 px-4 py-3 rounded-xl transition-all {% if current_url == 'business_edit' %}bg-indigo-100 text-indigo-700 font-semibold{% else %}text-gray-600 hover:bg-gray-100{% endif %}">
+                <span class="text-xl">🏢</span>
+                <span>اطلاعات کسب‌وکار</span>
+            </a>
+            <a href="{% url 'dashboard:category_list' %}" 
+               class="flex items-center gap-3 px-4 py-3 rounded-xl transition-all {% if current_url|slice:':9' == 'category_' %}bg-indigo-100 text-indigo-700 font-semibold{% else %}text-gray-600 hover:bg-gray-100{% endif %}">
+                <span class="text-xl">📁</span>
+                <span>دسته‌بندی‌ها</span>
+            </a>
+            <a href="{% url 'dashboard:item_list' %}" 
+               class="flex items-center gap-3 px-4 py-3 rounded-xl transition-all {% if current_url|slice:':5' == 'item_' %}bg-indigo-100 text-indigo-700 font-semibold{% else %}text-gray-600 hover:bg-gray-100{% endif %}">
+                <span class="text-xl">🍽️</span>
+                <span>محصولات</span>
+            </a>
+            <a href="{% url 'dashboard:menu_order' %}" 
+               class="flex items-center gap-3 px-4 py-3 rounded-xl transition-all {% if current_url == 'menu_order' %}bg-indigo-100 text-indigo-700 font-semibold{% else %}text-gray-600 hover:bg-gray-100{% endif %}">
+                <span class="text-xl">📋</span>
+                <span>ترتیب نمایش</span>
+            </a>
+            <a href="{% url 'menu:business_detail' business.slug %}" target="_blank"
+               class="flex items-center gap-3 px-4 py-3 rounded-xl text-gray-600 hover:bg-gray-100 transition-all">
+                <span class="text-xl">👁️</span>
+                <span>مشاهده منو</span>
+            </a>
+            {% endwith %}
+        </nav>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="md:mr-64 p-4 md:p-8 pt-20 md:pt-8">
+        {% block dashboard_content %}{% endblock %}
+    </main>
+</div>
+
+<script>
+    // Dashboard Mobile Menu with Swipe Support
+    document.addEventListener('DOMContentLoaded', function() {
+        const sidebar = document.getElementById('dashboard-sidebar');
+        const overlay = document.getElementById('dashboard-overlay');
+        const toggleBtn = document.getElementById('dashboard-mobile-toggle');
+        const closeBtn = document.getElementById('dashboard-close-btn');
+        const menuIcon = document.getElementById('dashboard-menu-icon');
+        const closeIcon = document.getElementById('dashboard-close-icon');
+        
+        if (!sidebar || !overlay || !toggleBtn) {
+            console.error('Dashboard menu elements not found');
+            return;
+        }
+        
+        function openSidebar() {
+            console.log('Opening sidebar');
+            // Remove inline transform if exists
+            sidebar.style.transform = '';
+            // Remove translate-x-full class
+            sidebar.classList.remove('translate-x-full');
+            // Show overlay
+            overlay.classList.remove('opacity-0', 'pointer-events-none');
+            overlay.classList.add('opacity-100', 'pointer-events-auto');
+            // Update icons
+            if (menuIcon) menuIcon.classList.add('hidden');
+            if (closeIcon) closeIcon.classList.remove('hidden');
+            // Prevent body scroll
+            document.body.style.overflow = 'hidden';
+        }
+        
+        function closeSidebar() {
+            console.log('Closing sidebar');
+            // Remove inline transform if exists
+            sidebar.style.transform = '';
+            // Add translate-x-full class
+            sidebar.classList.add('translate-x-full');
+            // Hide overlay
+            overlay.classList.add('opacity-0', 'pointer-events-none');
+            overlay.classList.remove('opacity-100', 'pointer-events-auto');
+            // Update icons
+            if (menuIcon) menuIcon.classList.remove('hidden');
+            if (closeIcon) closeIcon.classList.add('hidden');
+            // Restore body scroll
+            document.body.style.overflow = '';
+        }
+        
+        // Toggle button
+        toggleBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            const isOpen = !sidebar.classList.contains('translate-x-full');
+            console.log('Toggle clicked, sidebar is:', isOpen ? 'OPEN' : 'CLOSED');
+            if (isOpen) {
+                closeSidebar();
+            } else {
+                openSidebar();
+            }
+        });
+        
+        // Close button - Multiple event listeners for reliability
+        if (closeBtn) {
+            console.log('Close button found, attaching listeners');
+            
+            // Click event - use both onclick and addEventListener
+            function handleClose(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                console.log('Close button clicked');
+                closeSidebar();
+                return false;
+            }
+            
+            closeBtn.onclick = handleClose;
+            closeBtn.addEventListener('click', handleClose, true);
+            closeBtn.addEventListener('touchend', handleClose, { passive: false });
+            
+            // Make sure button is clickable and on top
+            closeBtn.style.pointerEvents = 'auto';
+            closeBtn.style.zIndex = '9999';
+            closeBtn.style.position = 'relative';
+        } else {
+            console.error('Close button not found');
+        }
+        
+        // Close on overlay click
+        overlay.addEventListener('click', function(e) {
+            if (e.target === overlay) {
+                e.preventDefault();
+                e.stopPropagation();
+                console.log('Overlay clicked');
+                closeSidebar();
+            }
+        });
+        
+        // Close on Escape key
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape' && !sidebar.classList.contains('translate-x-full')) {
+                closeSidebar();
+            }
+        });
+        
+        // Close on link click (mobile)
+        sidebar.querySelectorAll('a').forEach(link => {
+            link.addEventListener('click', function() {
+                if (window.innerWidth < 768) {
+                    setTimeout(closeSidebar, 100);
+                }
+            });
+        });
+        
+        // Debug: Log when sidebar state changes
+        const observer = new MutationObserver(function(mutations) {
+            mutations.forEach(function(mutation) {
+                if (mutation.attributeName === 'class') {
+                    const isOpen = !sidebar.classList.contains('translate-x-full');
+                    console.log('Sidebar is now:', isOpen ? 'OPEN' : 'CLOSED');
+                }
+            });
+        });
+        observer.observe(sidebar, { attributes: true, attributeFilter: ['class'] });
+        
+        // Swipe Support
+        let touchStartX = 0;
+        let touchEndX = 0;
+        let isDragging = false;
+        let currentTranslate = 0;
+        let previousTranslate = 0;
+        let animationID = 0;
+        
+        function getPositionX(event) {
+            return event.type.includes('mouse') ? event.clientX : event.touches[0].clientX;
+        }
+        
+        function setTransform() {
+            sidebar.style.transform = `translateX(${currentTranslate}px)`;
+        }
+        
+        function animation() {
+            setTransform();
+            if (isDragging) requestAnimationFrame(animation);
+        }
+        
+        // Touch events for sidebar (RTL - swipe from right)
+        sidebar.addEventListener('touchstart', function(e) {
+            if (window.innerWidth >= 768) return;
+            const isOpen = !sidebar.classList.contains('translate-x-full');
+            if (!isOpen) return; // Only allow swipe when sidebar is open
+            
+            // Don't start drag if clicking on close button or links
+            if (e.target.closest('#dashboard-close-btn') || e.target.closest('a')) {
+                return;
+            }
+            
+            touchStartX = getPositionX(e);
+            isDragging = true;
+            previousTranslate = 0;
+            currentTranslate = 0;
+            animationID = requestAnimationFrame(animation);
+            sidebar.style.transition = 'none';
+        });
+        
+        sidebar.addEventListener('touchmove', function(e) {
+            if (window.innerWidth >= 768 || !isDragging) return;
+            touchEndX = getPositionX(e);
+            const diff = touchEndX - touchStartX; // Positive = swipe right, Negative = swipe left
+            
+            // In RTL: sidebar is open at translate-x-0, closes to translate-x-full (positive)
+            const sidebarWidth = sidebar.offsetWidth;
+            currentTranslate = diff;
+            
+            // Prevent opening beyond 0 (already fully open)
+            if (currentTranslate > 0) currentTranslate = 0;
+            
+            // Prevent closing beyond sidebar width
+            if (currentTranslate < -sidebarWidth) currentTranslate = -sidebarWidth;
+        });
+        
+        sidebar.addEventListener('touchend', function() {
+            if (window.innerWidth >= 768 || !isDragging) return;
+            isDragging = false;
+            cancelAnimationFrame(animationID);
+            
+            const moved = currentTranslate;
+            const sidebarWidth = sidebar.offsetWidth;
+            const threshold = sidebarWidth * 0.25; // 25% threshold
+            
+            sidebar.style.transition = 'transform 0.3s ease-out';
+            
+            // In RTL: negative diff = swipe left = close
+            if (moved < -threshold) {
+                // Swipe left - close
+                closeSidebar();
+            } else {
+                // Swipe right or not enough - keep open
+                sidebar.style.transform = '';
+            }
+            
+            previousTranslate = 0;
+            currentTranslate = 0;
+        });
+        
+        // Swipe from edge to open (on main content) - RTL
+        const mainContent = document.querySelector('main');
+        if (mainContent) {
+            let edgeTouchStart = 0;
+            let edgeTouchStartY = 0;
+            const edgeThreshold = 30; // pixels from right edge
+            const verticalThreshold = 50; // max vertical movement
+            
+            mainContent.addEventListener('touchstart', function(e) {
+                if (window.innerWidth >= 768) return;
+                const touchX = e.touches[0].clientX;
+                const touchY = e.touches[0].clientY;
+                const screenWidth = window.innerWidth;
+                
+                // Check if touch started near right edge (RTL)
+                if (touchX >= screenWidth - edgeThreshold && sidebar.classList.contains('translate-x-full')) {
+                    edgeTouchStart = touchX;
+                    edgeTouchStartY = touchY;
+                }
+            });
+            
+            mainContent.addEventListener('touchmove', function(e) {
+                if (window.innerWidth >= 768) return;
+                if (!edgeTouchStart) return;
+                
+                const touchX = e.touches[0].clientX;
+                const touchY = e.touches[0].clientY;
+                const diffX = touchX - edgeTouchStart;
+                const diffY = Math.abs(touchY - edgeTouchStartY);
+                
+                // Swipe left from right edge (negative diff) - open sidebar
+                // Only if vertical movement is minimal (horizontal swipe)
+                if (diffX < -50 && diffY < verticalThreshold && sidebar.classList.contains('translate-x-full')) {
+                    openSidebar();
+                    edgeTouchStart = 0;
+                }
+            });
+            
+            mainContent.addEventListener('touchend', function() {
+                edgeTouchStart = 0;
+            });
+        }
+    });
+</script>
+
+<!-- Persian Date Picker Script -->
+<script src="https://unpkg.com/persian-date@1.1.0/dist/persian-date.min.js"></script>
+<script src="https://unpkg.com/persian-datepicker@1.2.0/dist/js/persian-datepicker.min.js"></script>
+<script>
+    // Initialize Persian Date Picker for all date inputs
+    $(document).ready(function() {
+        $('input[type="date"]').each(function() {
+            $(this).pDatepicker({
+                observer: true,
+                format: 'YYYY/MM/DD',
+                altField: $(this),
+                altFormat: 'YYYY-MM-DD',
+                calendarType: 'persian',
+                timePicker: {
+                    enabled: false
+                },
+                initialValue: false,
+                autoClose: true
+            });
+        });
+    });
+</script>
+{% endblock %}

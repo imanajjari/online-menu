@@ -1,0 +1,149 @@
+{% extends 'base.html' %}
+{% load humanize %}
+
+{% block title %}کافه منو | منوی آنلاین{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<div class="relative overflow-hidden bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-600 text-white">
+    <div class="absolute inset-0 bg-black/20"></div>
+    <div class="absolute inset-0 bg-grid-pattern opacity-10"></div>
+    <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 md:py-32">
+        <div class="text-center space-y-8">
+            <h1 class="text-4xl md:text-6xl font-bold leading-tight">
+                منوی دیجیتال اختصاصی<br>
+                برای کافه و رستوران شما
+            </h1>
+            <p class="text-xl md:text-2xl text-indigo-100 max-w-2xl mx-auto">
+                کد QR اختصاصی بگیرید، محصولات را با عکس و توضیح نمایش دهید و تجربه مشتری را بهبود دهید
+            </p>
+            
+            <!-- Search Bar -->
+            <form method="get" action="" class="max-w-2xl mx-auto flex gap-3">
+                <input type="search" name="q" value="{{ query }}" 
+                       placeholder="🔍 نام کافه، شهر یا سبک..." 
+                       class="w-full px-6 py-4 rounded-2xl border-0 focus:ring-4 focus:ring-white/50 outline-none text-gray-900 text-lg shadow-xl">
+                <button type="submit" class="px-8 py-4 bg-white text-indigo-600 rounded-2xl hover:bg-indigo-50 transition-colors font-bold shadow-xl hover:shadow-2xl">
+                    جستجو
+                </button>
+            </form>
+            
+            <!-- CTA Buttons -->
+            <div class="flex flex-wrap justify-center gap-4 pt-4">
+                <a href="{% url 'accounts:signup' %}" 
+                   class="px-8 py-4 bg-white text-indigo-600 rounded-2xl hover:bg-indigo-50 transition-all font-bold shadow-xl hover:shadow-2xl hover:scale-105">
+                    ✨ ساخت حساب برای صاحبان کافه
+                </a>
+                <a href="{% url 'accounts:login' %}" 
+                   class="px-8 py-4 bg-white/10 backdrop-blur-sm text-white border-2 border-white/30 rounded-2xl hover:bg-white/20 transition-all font-bold">
+                    ورود به داشبورد
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+    <!-- Featured Items -->
+    {% if featured_items %}
+    <section class="mb-20">
+        <div class="text-center mb-12">
+            <h2 class="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+                ⭐ محصولات ویژه
+            </h2>
+            <p class="text-gray-600 text-lg">چند نمونه از منوهای فعال</p>
+        </div>
+        <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {% for item in featured_items %}
+            <div class="group bg-white rounded-3xl shadow-lg hover:shadow-2xl transition-all duration-300 overflow-hidden border-2 border-transparent hover:border-indigo-200 transform hover:-translate-y-2">
+                <div class="relative overflow-hidden h-56 bg-gradient-to-br from-gray-100 to-gray-200">
+                    {% if item.primary_image %}
+                    <img src="{{ item.primary_image.url }}" alt="{{ item.name }}" 
+                         class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500">
+                    {% else %}
+                    <div class="w-full h-full flex items-center justify-center">
+                        <span class="text-7xl opacity-30">🍽️</span>
+                    </div>
+                    {% endif %}
+                    <div class="absolute top-4 right-4 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full text-sm font-semibold text-indigo-600">
+                        {{ item.category.title }}
+                    </div>
+                </div>
+                <div class="p-6">
+                    <h3 class="text-xl font-bold text-gray-900 mb-2">{{ item.name }}</h3>
+                    <p class="text-gray-600 mb-4 line-clamp-2">{{ item.description|truncatewords:18|default:"بدون توضیحات" }}</p>
+                    <div class="flex items-center justify-between pt-4 border-t border-gray-100">
+                        <span class="text-2xl font-bold text-indigo-600">{{ item.price|intcomma }} <span class="text-sm text-gray-500 font-normal">تومان</span></span>
+                        <a href="{% url 'menu:item_detail' item.category.business.slug item.slug %}" 
+                           class="px-4 py-2 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition-colors font-semibold">
+                            مشاهده
+                        </a>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </section>
+    {% endif %}
+
+    <!-- Businesses Grid -->
+    <section>
+        <div class="text-center mb-12">
+            <h2 class="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+                🏪 کافه‌ها و رستوران‌ها
+            </h2>
+            <p class="text-gray-600 text-lg">منوی آنلاین هر مجموعه را ببینید</p>
+        </div>
+        {% if businesses %}
+        <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {% for business in businesses %}
+            <a href="{% url 'menu:business_detail' business.slug %}" 
+               class="group bg-white rounded-3xl shadow-lg hover:shadow-2xl transition-all duration-300 overflow-hidden border-2 border-transparent hover:border-indigo-200 transform hover:-translate-y-2">
+                <div class="relative h-48 bg-gradient-to-br from-indigo-400 to-purple-500 overflow-hidden">
+                    {% if business.cover_image %}
+                    <img src="{{ business.cover_image.url }}" alt="{{ business.name }}" 
+                         class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500">
+                    {% else %}
+                    <div class="w-full h-full flex items-center justify-center">
+                        <span class="text-7xl opacity-30">☕</span>
+                    </div>
+                    {% endif %}
+                    <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
+                    <div class="absolute bottom-4 right-4 left-4 text-white">
+                        {% if business.logo %}
+                        <img src="{{ business.logo.url }}" alt="{{ business.name }}" 
+                             class="w-16 h-16 rounded-2xl mb-3 border-4 border-white shadow-lg object-cover">
+                        {% endif %}
+                        <h3 class="text-2xl font-bold mb-1">{{ business.name }}</h3>
+                        {% if business.tagline %}
+                        <p class="text-indigo-200 text-sm">{{ business.tagline }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="p-6">
+                    {% if business.city %}
+                    <div class="flex items-center gap-2 text-gray-500 mb-3">
+                        <span>📍</span>
+                        <span>{{ business.city }}</span>
+                    </div>
+                    {% endif %}
+                    <p class="text-gray-600 line-clamp-3">{{ business.description|truncatewords:20|default:"بدون توضیحات" }}</p>
+                    <div class="mt-4 pt-4 border-t border-gray-100">
+                        <span class="text-indigo-600 font-semibold hover:text-indigo-700">
+                            مشاهده منو →
+                        </span>
+                    </div>
+                </div>
+            </a>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="text-center py-16 bg-white rounded-3xl shadow-lg">
+            <span class="text-8xl mb-4 block">🔍</span>
+            <p class="text-gray-500 text-xl mb-2">نتیجه‌ای یافت نشد.</p>
+            <p class="text-gray-400">لطفا کلمه کلیدی دیگری را امتحان کنید.</p>
+        </div>
+        {% endif %}
+    </section>
+</div>
+{% endblock %}

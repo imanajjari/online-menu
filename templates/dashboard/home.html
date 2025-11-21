@@ -1,0 +1,73 @@
+{% extends 'dashboard/base_dashboard.html' %}
+
+{% block dashboard_content %}
+<div class="space-y-8">
+    <!-- Welcome Header -->
+    <div class="bg-gradient-to-r from-indigo-600 to-purple-600 rounded-3xl p-8 text-white shadow-xl">
+        <h1 class="text-3xl font-bold mb-2">خوش آمدید {{ request.user.first_name|default:request.user.username }}! 👋</h1>
+        <p class="text-indigo-100 text-lg">از این بخش می‌توانید منوی آنلاین خود را مدیریت کنید</p>
+    </div>
+
+    <!-- Stats Grid -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div class="bg-white rounded-2xl p-6 shadow-lg border-2 border-transparent hover:border-indigo-200 transition-all">
+            <div class="flex items-center justify-between mb-4">
+                <div class="w-12 h-12 bg-indigo-100 rounded-xl flex items-center justify-center">
+                    <span class="text-2xl">📁</span>
+                </div>
+            </div>
+            <p class="text-gray-500 text-sm mb-1">دسته‌بندی‌ها</p>
+            <p class="text-3xl font-bold text-gray-900">{{ categories_count }}</p>
+        </div>
+
+        <div class="bg-white rounded-2xl p-6 shadow-lg border-2 border-transparent hover:border-indigo-200 transition-all">
+            <div class="flex items-center justify-between mb-4">
+                <div class="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center">
+                    <span class="text-2xl">🍽️</span>
+                </div>
+            </div>
+            <p class="text-gray-500 text-sm mb-1">کل محصولات</p>
+            <p class="text-3xl font-bold text-gray-900">{{ items_count }}</p>
+        </div>
+
+        <div class="bg-white rounded-2xl p-6 shadow-lg border-2 border-transparent hover:border-indigo-200 transition-all">
+            <div class="flex items-center justify-between mb-4">
+                <div class="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center">
+                    <span class="text-2xl">✅</span>
+                </div>
+            </div>
+            <p class="text-gray-500 text-sm mb-1">فعال</p>
+            <p class="text-3xl font-bold text-gray-900">{{ active_items }}</p>
+        </div>
+
+        <div class="bg-white rounded-2xl p-6 shadow-lg border-2 border-transparent hover:border-indigo-200 transition-all">
+            <div class="flex items-center justify-between mb-4">
+                <div class="w-12 h-12 bg-yellow-100 rounded-xl flex items-center justify-center">
+                    <span class="text-2xl">⭐</span>
+                </div>
+            </div>
+            <p class="text-gray-500 text-sm mb-1">ویژه</p>
+            <p class="text-3xl font-bold text-gray-900">{{ featured_items }}</p>
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="bg-white rounded-3xl p-6 shadow-lg">
+        <h2 class="text-xl font-bold text-gray-900 mb-4">دسترسی سریع</h2>
+        <div class="flex flex-wrap gap-4">
+            <a href="{% url 'dashboard:item_create' %}" 
+               class="px-6 py-3 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition-colors font-semibold shadow-lg hover:shadow-xl">
+                ➕ افزودن محصول جدید
+            </a>
+            <a href="{% url 'dashboard:category_create' %}" 
+               class="px-6 py-3 bg-purple-600 text-white rounded-xl hover:bg-purple-700 transition-colors font-semibold shadow-lg hover:shadow-xl">
+                📁 افزودن دسته‌بندی
+            </a>
+            <a href="{% url 'menu:business_detail' business.slug %}" target="_blank"
+               class="px-6 py-3 bg-gray-100 text-gray-700 rounded-xl hover:bg-gray-200 transition-colors font-semibold">
+                👁️ مشاهده منو
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}

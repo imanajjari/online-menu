@@ -1,0 +1,110 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{% block title %}منوی دیجیتال{% endblock %}</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;500;600;700;800&display=swap">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Vazirmatn', 'system-ui', 'sans-serif'],
+                    },
+                }
+            }
+        }
+    </script>
+    <link rel="stylesheet" href="{% static 'css/custom.css' %}">
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    {% block extra_head %}{% endblock %}
+</head>
+<body class="bg-gray-50 font-sans antialiased">
+    <div class="min-h-screen flex flex-col">
+        <!-- Header - Only show if user is authenticated or on non-menu pages -->
+        {% if request.user.is_authenticated or request.resolver_match.app_name != 'menu' %}
+        <header class="bg-white shadow-sm sticky top-0 z-50 backdrop-blur-sm bg-white/95">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="flex items-center justify-between h-16">
+                    <a href="{% url 'menu:home' %}" class="text-2xl font-bold bg-gradient-to-l from-indigo-600 to-purple-600 bg-clip-text text-transparent">
+                        ☕ کافه منو
+                    </a>
+                    <nav class="hidden md:flex items-center gap-4">
+                        <a href="{% url 'menu:notes' %}" class="text-gray-600 hover:text-indigo-600 transition-colors font-medium">
+                            📝 یادداشت‌ها
+                        </a>
+                        {% if request.user.is_authenticated %}
+                            <a href="{% url 'dashboard:home' %}" class="text-gray-600 hover:text-indigo-600 transition-colors font-medium">
+                                🎛️ داشبورد
+                            </a>
+                            <form action="{% url 'accounts:logout' %}" method="post" class="inline">
+                                {% csrf_token %}
+                                <button type="submit" class="text-gray-600 hover:text-red-600 transition-colors font-medium">
+                                    خروج
+                                </button>
+                            </form>
+                        {% else %}
+                            <a href="{% url 'accounts:login' %}" class="text-gray-600 hover:text-indigo-600 transition-colors font-medium">
+                                ورود
+                            </a>
+                            <a href="{% url 'accounts:signup' %}" class="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors font-medium">
+                                ثبت‌نام
+                            </a>
+                        {% endif %}
+                    </nav>
+                    <!-- Mobile menu button -->
+                    <button id="mobile-menu-btn" class="md:hidden p-2 rounded-lg text-gray-600 hover:bg-gray-100">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+            <!-- Mobile menu -->
+            <div id="mobile-menu" class="hidden md:hidden border-t border-gray-200 bg-white">
+                <div class="px-4 py-3 space-y-2">
+                    <a href="{% url 'menu:notes' %}" class="block py-2 text-gray-600 hover:text-indigo-600">📝 یادداشت‌ها</a>
+                    {% if request.user.is_authenticated %}
+                        <a href="{% url 'dashboard:home' %}" class="block py-2 text-gray-600 hover:text-indigo-600">🎛️ داشبورد</a>
+                        <form action="{% url 'accounts:logout' %}" method="post" class="inline">
+                            {% csrf_token %}
+                            <button type="submit" class="block py-2 text-gray-600 hover:text-red-600 w-full text-right">خروج</button>
+                        </form>
+                    {% else %}
+                        <a href="{% url 'accounts:login' %}" class="block py-2 text-gray-600 hover:text-indigo-600">ورود</a>
+                        <a href="{% url 'accounts:signup' %}" class="block py-2 bg-indigo-600 text-white rounded-lg text-center">ثبت‌نام</a>
+                    {% endif %}
+                </div>
+            </div>
+        </header>
+        {% endif %}
+
+        <!-- Main Content -->
+        <main class="flex-1">
+            {% include 'partials/messages.html' %}
+            {% block content %}{% endblock %}
+        </main>
+
+        <!-- Footer -->
+        <footer class="bg-white border-t border-gray-200 mt-auto">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+                <p class="text-center text-gray-500 text-sm">
+                    طراحی شده توسط @imanajjari
+                </p>
+            </div>
+        </footer>
+    </div>
+
+    <script>
+        // Mobile menu toggle
+        document.getElementById('mobile-menu-btn')?.addEventListener('click', function() {
+            const menu = document.getElementById('mobile-menu');
+            menu.classList.toggle('hidden');
+        });
+    </script>
+    {% block extra_scripts %}{% endblock %}
+</body>
+</html>

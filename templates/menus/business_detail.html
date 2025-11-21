@@ -1,0 +1,455 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load menu_extras %}
+{% load humanize %}
+
+{% block title %}{{ business.name }} | منوی آنلاین{% endblock %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/lightbox2@2.11.4/dist/css/lightbox.min.css">
+{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<div class="relative overflow-hidden bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50">
+    <div class="absolute inset-0 bg-grid-pattern opacity-5"></div>
+    <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <div class="grid md:grid-cols-2 gap-8 items-center">
+            <!-- Business Info -->
+            <div class="space-y-6">
+                {% if business.logo %}
+                <img src="{{ business.logo.url }}" alt="{{ business.name }}" class="w-24 h-24 rounded-2xl shadow-lg object-cover">
+                {% endif %}
+                <div>
+                    <h1 class="text-4xl md:text-5xl font-bold text-gray-900 mb-3">{{ business.name }}</h1>
+                    {% if business.tagline %}
+                    <p class="text-xl text-indigo-600 font-medium mb-4">{{ business.tagline }}</p>
+                    {% endif %}
+                    <p class="text-gray-600 leading-relaxed">{{ business.description }}</p>
+                </div>
+                
+                <!-- Contact Info -->
+                <div class="grid sm:grid-cols-2 gap-4 pt-4">
+                    {% if business.city %}
+                    <div class="flex items-center gap-2 text-gray-600">
+                        <span class="text-2xl">📍</span>
+                        <span>{{ business.city }}</span>
+                    </div>
+                    {% endif %}
+                    {% if business.primary_phone %}
+                    <div class="flex items-center gap-2 text-gray-600">
+                        <span class="text-2xl">📞</span>
+                        <span>{{ business.primary_phone }}</span>
+                    </div>
+                    {% endif %}
+                    {% if business.contact_email %}
+                    <div class="flex items-center gap-2 text-gray-600">
+                        <span class="text-2xl">✉️</span>
+                        <a href="mailto:{{ business.contact_email }}" class="hover:text-indigo-600">{{ business.contact_email }}</a>
+                    </div>
+                    {% endif %}
+                    {% if business.location_link %}
+                    <a href="{{ business.location_link }}" target="_blank" class="flex items-center gap-2 text-indigo-600 hover:text-indigo-700 font-medium">
+                        <span class="text-2xl">🗺️</span>
+                        <span>مشاهده روی نقشه</span>
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <!-- Cover Image -->
+            <div class="relative">
+                {% if business.cover_image %}
+                <img src="{{ business.cover_image.url }}" alt="{{ business.name }}" class="rounded-3xl shadow-2xl w-full h-80 object-cover">
+                {% else %}
+                <div class="rounded-3xl shadow-2xl w-full h-80 bg-gradient-to-br from-indigo-400 to-purple-500 flex items-center justify-center">
+                    <span class="text-6xl">☕</span>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <!-- Search Bar -->
+    <div class="mb-8">
+        <form method="get" class="flex gap-2">
+            <input type="search" name="q" value="{{ query }}" 
+                   placeholder="🔍 جستجوی محصولات..." 
+                   class="w-full px-6 py-4 rounded-2xl border-2 border-gray-200 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 outline-none transition-all text-lg">
+            <button type="submit" class="px-8 py-4 bg-indigo-600 text-white rounded-2xl hover:bg-indigo-700 transition-colors font-semibold shadow-lg hover:shadow-xl">
+                جستجو
+            </button>
+        </form>
+    </div>
+
+    <!-- Category Tabs (Horizontal Scroll) -->
+    {% if categories_data %}
+    <div class="mb-8 overflow-x-auto pb-4 scrollbar-hide">
+        <div class="flex gap-3 min-w-max">
+            {% for block in categories_data %}
+            <a href="#category-{{ block.category.slug }}" 
+               class="category-tab-item flex-shrink-0 flex justify-center items-center px-6 py-3 rounded-full bg-white border-2 border-gray-200 hover:border-indigo-500 hover:bg-indigo-50 transition-all font-semibold text-gray-700 hover:text-indigo-600 shadow-sm hover:shadow-md whitespace-nowrap">
+                {% if block.category.cover_image %}
+                <img src="{{ block.category.cover_image.url }}" alt="{{ block.category.title }}" class="w-8 h-8 rounded-full object-cover ml-2">
+                {% endif %}
+                <span>{{ block.category.title }}</span>
+            </a>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Business Hours -->
+    {% if business.show_hours and business.hours.exists %}
+    <div class="bg-white rounded-3xl shadow-lg p-6 mb-8">
+        <h2 class="text-2xl font-bold text-gray-900 mb-4 flex items-center gap-2">
+            <span>🕐</span>
+            <span>ساعات کاری</span>
+        </h2>
+        <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            {% for hour in business.hours.all %}
+            <div class="flex items-center justify-between p-4 rounded-xl {% if hour.is_closed %}bg-red-50 text-red-700{% else %}bg-green-50 text-green-700{% endif %}">
+                <span class="font-semibold">{{ hour.get_day_of_week_display }}</span>
+                {% if hour.is_closed %}
+                <span class="text-sm font-medium">تعطیل</span>
+                {% else %}
+                <span class="text-sm font-medium">{{ hour.opens_at|default:"--" }} - {{ hour.closes_at|default:"--" }}</span>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Menu Sections -->
+    {% if categories_data %}
+        {% for block in categories_data %}
+        <div id="category-{{ block.category.slug }}" class="menu-section mb-16 scroll-mt-24">
+            <!-- Category Header -->
+            <div class="mb-6">
+                {% if block.category.cover_image %}
+                <div class="mb-4 rounded-3xl overflow-hidden shadow-xl">
+                    <img src="{{ block.category.cover_image.url }}" alt="{{ block.category.title }}" class="w-full h-64 object-cover">
+                </div>
+                {% endif %}
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h2 class="text-3xl font-bold text-gray-900 mb-2">{{ block.category.title }}</h2>
+                        {% if block.category.description %}
+                        <p class="text-gray-600 text-lg">{{ block.category.description }}</p>
+                        {% endif %}
+                    </div>
+                    <span class="bg-indigo-100 text-indigo-700 px-4 py-2 rounded-full font-semibold">
+                        {{ block.item_count }} محصول
+                    </span>
+                </div>
+            </div>
+
+            <!-- Menu Items Grid -->
+            {% if block.items %}
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+                {% for item in block.items %}
+                <div class="group bg-white rounded-3xl shadow-lg hover:shadow-2xl transition-all duration-300 overflow-hidden border-2 border-transparent hover:border-indigo-200">
+                    <!-- Item Image -->
+                    <div class="relative overflow-hidden h-48 bg-gradient-to-br from-gray-100 to-gray-200">
+                        {% if item.primary_image %}
+                        <a href="{{ item.primary_image.url }}" data-lightbox="item-{{ item.id }}" data-title="{{ item.name }}">
+                            <img src="{{ item.primary_image.url }}" alt="{{ item.name }}" 
+                                 class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500 cursor-pointer">
+                        </a>
+                        {% else %}
+                        <div class="w-full h-full flex items-center justify-center">
+                            <span class="text-6xl opacity-30">🍽️</span>
+                        </div>
+                        {% endif %}
+                        {% if item.badge %}
+                        <span class="absolute top-4 right-4 bg-gradient-to-r from-pink-500 to-rose-500 text-white px-3 py-1 rounded-full text-sm font-bold shadow-lg">
+                            {{ item.badge }}
+                        </span>
+                        {% endif %}
+                        {% if item.gallery.all %}
+                        <span class="absolute top-4 left-4 bg-black/50 backdrop-blur-sm text-white px-3 py-1 rounded-full text-xs font-bold">
+                            🖼️ {{ item.gallery.count }}
+                        </span>
+                        {% endif %}
+                    </div>
+
+                    <!-- Item Content -->
+                    <div class="p-6">
+                        <h3 class="text-xl font-bold text-gray-900 mb-2">{{ item.name }}</h3>
+                        <p class="text-gray-600 mb-4 line-clamp-2">{{ item.description|default:"بدون توضیحات" }}</p>
+                        
+                        <!-- Price -->
+                        <div class="flex items-center justify-between mb-4">
+                            <div class="flex items-center gap-2">
+                                {% if item.special_price %}
+                                <span class="text-2xl font-bold text-indigo-600">{{ item.special_price|intcomma }}</span>
+                                <span class="text-sm text-gray-400 line-through">{{ item.price|intcomma }}</span>
+                                {% elif item.discount_percent %}
+                                <span class="text-2xl font-bold text-indigo-600">{{ item.price|intcomma }}</span>
+                                <span class="text-sm bg-green-100 text-green-700 px-2 py-1 rounded-full font-semibold">
+                                    {{ item.discount_percent }}% تخفیف
+                                </span>
+                                {% else %}
+                                <span class="text-2xl font-bold text-indigo-600">{{ item.price|intcomma }}</span>
+                                {% endif %}
+                                <span class="text-sm text-gray-500">تومان</span>
+                            </div>
+                        </div>
+
+                        <!-- Additional Info -->
+                        {% if not item.is_full_time %}
+                        <div class="mb-4 p-3 bg-blue-50 rounded-xl">
+                            <p class="text-sm text-blue-700">
+                                <span class="font-semibold">⏰</span>
+                                {{ item.available_from }} تا {{ item.available_to }} | {{ item.get_available_days_display }}
+                            </p>
+                        </div>
+                        {% endif %}
+
+                        {% if item.ingredients %}
+                        <div class="mb-4">
+                            <p class="text-sm text-gray-500">
+                                <span class="font-semibold">🧾</span>
+                                {{ item.ingredients|truncatewords:10 }}
+                            </p>
+                        </div>
+                        {% endif %}
+
+                        <!-- Gallery Thumbnails (Hidden but included for lightbox) -->
+                        {% if item.gallery.all %}
+                        <div class="hidden">
+                            {% for gallery_img in item.gallery.all %}
+                            <a href="{{ gallery_img.image.url }}" data-lightbox="item-{{ item.id }}" data-title="{{ gallery_img.caption|default:item.name }}"></a>
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+
+                        <!-- Actions -->
+                        <div class="flex gap-2 pt-4 border-t border-gray-100">
+                            <button type="button" 
+                                    class="item-detail-btn flex-1 px-4 py-2 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition-colors font-semibold"
+                                    data-item-id="{{ item.id }}"
+                                    data-item-name="{{ item.name }}"
+                                    data-item-description="{{ item.description|default:'بدون توضیحات' }}"
+                                    data-item-price="{{ item.price }}"
+                                    data-item-special-price="{{ item.special_price|default:'' }}"
+                                    data-item-discount="{{ item.discount_percent|default:'' }}"
+                                    data-item-badge="{{ item.badge|default:'' }}"
+                                    data-item-ingredients="{{ item.ingredients|default:'' }}"
+                                    data-item-calories="{{ item.calories|default:'' }}"
+                                    data-item-full-time="{{ item.is_full_time }}"
+                                    data-item-available-from="{{ item.available_from|default:'' }}"
+                                    data-item-available-to="{{ item.available_to|default:'' }}"
+                                    data-item-available-days="{{ item.get_available_days_display }}"
+                                    data-item-image="{% if item.primary_image %}{{ item.primary_image.url }}{% endif %}"
+                                    data-item-url="{{ item.get_absolute_url }}">
+                                جزئیات
+                            </button>
+                            {% with has_note=note_map|has_note:item.id note_value=note_map|note_text:item.id %}
+                            <button type="button"
+                                    class="note-action flex-1 px-4 py-2 rounded-xl font-semibold transition-all {% if has_note %}bg-gray-200 text-gray-700 hover:bg-gray-300{% else %}bg-indigo-100 text-indigo-700 hover:bg-indigo-200{% endif %}"
+                                    data-item="{{ item.id }}"
+                                    data-add-url="{% url 'menu:add_note' business.slug item.id %}"
+                                    data-has-note="{% if has_note %}true{% else %}false{% endif %}"
+                                    data-note="{{ note_value|default:'' }}">
+                                {% if has_note %}📝 ویرایش{% else %}➕ افزودن{% endif %}
+                            </button>
+                            {% endwith %}
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="text-center py-12 bg-gray-50 rounded-3xl">
+                <span class="text-6xl mb-4 block">🍽️</span>
+                <p class="text-gray-500 text-lg">محصولی در این دسته یافت نشد.</p>
+            </div>
+            {% endif %}
+        </div>
+        {% endfor %}
+    {% else %}
+    <div class="text-center py-16 bg-white rounded-3xl shadow-lg">
+        <span class="text-8xl mb-4 block">📋</span>
+        <p class="text-gray-500 text-xl">منو در حال آماده‌سازی است.</p>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Floating Notes Button -->
+<a href="{% url 'menu:notes' %}"
+   id="notes-fab"
+   class="fixed left-4 md:left-6 bottom-4 md:bottom-6 bg-gradient-to-r from-indigo-600 to-purple-600 text-white p-3 md:p-4 rounded-full shadow-2xl hover:shadow-3xl transition-all hover:scale-110 z-50 {% if note_count|default:0 == 0 %}hidden{% endif %}"
+   data-count="{{ note_count|default:0 }}">
+    <div class="relative">
+        <span class="text-2xl">📝</span>
+        {% if note_count|default:0 > 0 %}
+        <span class="absolute -top-2 -right-2 bg-red-500 text-white text-xs font-bold rounded-full w-6 h-6 flex items-center justify-center">
+            {{ note_count|default:0 }}
+        </span>
+        {% endif %}
+    </div>
+</a>
+
+<!-- Toast Notification -->
+<div id="note-toast" class="fixed left-1/2 bottom-24 transform -translate-x-1/2 bg-indigo-600 text-white px-6 py-3 rounded-xl shadow-2xl z-50 hidden transition-all">
+    <span id="toast-message"></span>
+</div>
+
+<!-- Item Detail Modal -->
+<div id="item-modal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 hidden items-center justify-center p-2 md:p-4" style="display: none;">
+    <div class="bg-white rounded-2xl md:rounded-3xl shadow-2xl max-w-2xl w-full max-h-[95vh] md:max-h-[90vh] overflow-y-auto">
+        <div class="sticky top-0 bg-white border-b border-gray-200 p-6 flex items-center justify-between rounded-t-3xl">
+            <h2 id="modal-item-name" class="text-2xl font-bold text-gray-900"></h2>
+            <button id="close-modal" class="text-gray-400 hover:text-gray-600 text-3xl leading-none">&times;</button>
+        </div>
+        <div class="p-6 space-y-6">
+            <!-- Image -->
+            <div id="modal-item-image-container" class="rounded-2xl overflow-hidden bg-gray-100"></div>
+            
+            <!-- Badge -->
+            <div id="modal-item-badge-container"></div>
+            
+            <!-- Description -->
+            <div>
+                <h3 class="text-lg font-bold text-gray-900 mb-2">📝 توضیحات</h3>
+                <p id="modal-item-description" class="text-gray-600 leading-relaxed"></p>
+            </div>
+            
+            <!-- Price -->
+            <div class="bg-gradient-to-r from-indigo-50 to-purple-50 rounded-2xl p-6 border-2 border-indigo-100">
+                <h3 class="text-lg font-bold text-gray-900 mb-3">💰 قیمت</h3>
+                <div id="modal-item-price" class="flex items-center gap-3"></div>
+            </div>
+            
+            <!-- Additional Info -->
+            <div id="modal-item-info" class="space-y-3"></div>
+            
+            <!-- Actions -->
+            <div class="flex gap-3 pt-4 border-t border-gray-200">
+                <a id="modal-item-link" href="#" class="flex-1 text-center px-6 py-3 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition-colors font-semibold">
+                    مشاهده صفحه کامل
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="https://cdn.jsdelivr.net/npm/lightbox2@2.11.4/dist/js/lightbox.min.js"></script>
+<script>
+    lightbox.option({
+        'resizeDuration': 200,
+        'wrapAround': true,
+        'albumLabel': 'عکس %1 از %2'
+    });
+</script>
+<script src="{% static 'js/notes.js' %}" defer></script>
+<script>
+    // Item Detail Modal
+    const modal = document.getElementById('item-modal');
+    const closeModal = document.getElementById('close-modal');
+    
+    document.querySelectorAll('.item-detail-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const itemId = this.dataset.itemId;
+            const itemName = this.dataset.itemName;
+            const itemDescription = this.dataset.itemDescription;
+            const itemPrice = parseInt(this.dataset.itemPrice);
+            const itemSpecialPrice = this.dataset.itemSpecialPrice ? parseInt(this.dataset.itemSpecialPrice) : null;
+            const itemDiscount = this.dataset.itemDiscount ? parseInt(this.dataset.itemDiscount) : null;
+            const itemBadge = this.dataset.itemBadge;
+            const itemIngredients = this.dataset.itemIngredients;
+            const itemCalories = this.dataset.itemCalories;
+            const itemFullTime = this.dataset.itemFullTime === 'True';
+            const itemAvailableFrom = this.dataset.itemAvailableFrom;
+            const itemAvailableTo = this.dataset.itemAvailableTo;
+            const itemAvailableDays = this.dataset.itemAvailableDays;
+            const itemImage = this.dataset.itemImage;
+            const itemUrl = this.dataset.itemUrl;
+            
+            // Fill modal
+            document.getElementById('modal-item-name').textContent = itemName;
+            document.getElementById('modal-item-description').textContent = itemDescription;
+            document.getElementById('modal-item-link').href = itemUrl;
+            
+            // Image
+            const imageContainer = document.getElementById('modal-item-image-container');
+            if (itemImage) {
+                imageContainer.innerHTML = `<img src="${itemImage}" alt="${itemName}" class="w-full h-64 object-cover">`;
+            } else {
+                imageContainer.innerHTML = `<div class="w-full h-64 flex items-center justify-center"><span class="text-9xl opacity-30">🍽️</span></div>`;
+            }
+            
+            // Badge
+            const badgeContainer = document.getElementById('modal-item-badge-container');
+            if (itemBadge) {
+                badgeContainer.innerHTML = `<span class="inline-block bg-gradient-to-r from-pink-500 to-rose-500 text-white px-4 py-2 rounded-full text-sm font-bold">${itemBadge}</span>`;
+            } else {
+                badgeContainer.innerHTML = '';
+            }
+            
+            // Price
+            const priceContainer = document.getElementById('modal-item-price');
+            let priceHtml = '';
+            if (itemSpecialPrice) {
+                priceHtml = `<span class="text-3xl font-bold text-indigo-600">${itemSpecialPrice.toLocaleString('fa-IR')}</span><span class="text-lg text-gray-400 line-through">${itemPrice.toLocaleString('fa-IR')}</span><span class="text-gray-500">تومان</span>`;
+            } else if (itemDiscount) {
+                priceHtml = `<span class="text-3xl font-bold text-indigo-600">${itemPrice.toLocaleString('fa-IR')}</span><span class="bg-green-100 text-green-700 px-3 py-1 rounded-full text-sm font-semibold">${itemDiscount}% تخفیف</span><span class="text-gray-500">تومان</span>`;
+            } else {
+                priceHtml = `<span class="text-3xl font-bold text-indigo-600">${itemPrice.toLocaleString('fa-IR')}</span><span class="text-gray-500">تومان</span>`;
+            }
+            priceContainer.innerHTML = priceHtml;
+            
+            // Additional Info
+            const infoContainer = document.getElementById('modal-item-info');
+            let infoHtml = '';
+            if (!itemFullTime && itemAvailableFrom && itemAvailableTo) {
+                infoHtml += `<div class="bg-blue-50 rounded-xl p-4 border border-blue-200"><p class="text-blue-700"><span class="font-semibold">⏰</span> ساعات ارائه: ${itemAvailableFrom} تا ${itemAvailableTo}</p><p class="text-blue-600 text-sm mt-1">روزها: ${itemAvailableDays}</p></div>`;
+            }
+            if (itemIngredients) {
+                infoHtml += `<div class="bg-gray-50 rounded-xl p-4"><p class="text-gray-700"><span class="font-semibold">🧾</span> مواد تشکیل‌دهنده: ${itemIngredients}</p></div>`;
+            }
+            if (itemCalories) {
+                infoHtml += `<div class="bg-orange-50 rounded-xl p-4 border border-orange-200"><p class="text-orange-700"><span class="font-semibold">🔥</span> کالری: ${itemCalories} کیلوکالری</p></div>`;
+            }
+            infoContainer.innerHTML = infoHtml || '<p class="text-gray-500 text-center">اطلاعات اضافی وجود ندارد</p>';
+            
+            // Show modal
+            modal.classList.remove('hidden');
+            modal.style.display = 'flex';
+            document.body.style.overflow = 'hidden';
+        });
+    });
+    
+    closeModal.addEventListener('click', function() {
+        modal.classList.add('hidden');
+        modal.style.display = 'none';
+        document.body.style.overflow = '';
+    });
+    
+    modal.addEventListener('click', function(e) {
+        if (e.target === modal) {
+            modal.classList.add('hidden');
+            modal.style.display = 'none';
+            document.body.style.overflow = '';
+        }
+    });
+    
+    // Smooth scroll for category tabs
+    document.querySelectorAll('.category-tab-item').forEach(tab => {
+        tab.addEventListener('click', function(e) {
+            e.preventDefault();
+            const targetId = this.getAttribute('href');
+            const target = document.querySelector(targetId);
+            if (target) {
+                target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+        });
+    });
+</script>
+{% endblock %}

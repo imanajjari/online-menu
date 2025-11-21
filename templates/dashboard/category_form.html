@@ -1,0 +1,73 @@
+{% extends 'dashboard/base_dashboard.html' %}
+{% load static %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/lightbox2@2.11.4/dist/css/lightbox.min.css">
+{{ block.super }}
+{% endblock %}
+
+{% block dashboard_content %}
+<div class="max-w-3xl">
+    <div class="mb-8">
+        <h1 class="text-3xl font-bold text-gray-900 mb-2">
+            {% if category %}✏️ ویرایش دسته‌بندی{% else %}➕ دسته‌بندی جدید{% endif %}
+        </h1>
+        <p class="text-gray-600">اطلاعات دسته‌بندی خود را وارد کنید</p>
+    </div>
+
+    <form method="post" enctype="multipart/form-data" class="bg-white rounded-3xl shadow-lg p-8 space-y-6" novalidate>
+        {% csrf_token %}
+        
+        <div class="grid md:grid-cols-2 gap-6">
+            {% for field in form %}
+            <div class="space-y-2 {% if field.name == 'description' %}md:col-span-2{% endif %}">
+                <label class="block text-sm font-semibold text-gray-700">
+                    {{ field.label }}
+                    {% if field.field.required %}<span class="text-red-500">*</span>{% endif %}
+                </label>
+                {{ field }}
+                {% if field.help_text %}
+                <p class="text-xs text-gray-500">{{ field.help_text }}</p>
+                {% endif %}
+                {% for error in field.errors %}
+                <p class="text-sm text-red-600">{{ error }}</p>
+                {% endfor %}
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- Preview Cover Image -->
+        {% if category and category.cover_image %}
+        <div class="border-t border-gray-200 pt-6">
+            <label class="block text-sm font-semibold text-gray-700 mb-4">🖼️ عکس فعلی</label>
+            <a href="{{ category.cover_image.url }}" data-lightbox="category" data-title="{{ category.title }}">
+                <img src="{{ category.cover_image.url }}" alt="{{ category.title }}" 
+                     class="w-full max-w-md rounded-2xl shadow-lg hover:shadow-xl transition-shadow cursor-pointer">
+            </a>
+        </div>
+        {% endif %}
+
+        <!-- Actions -->
+        <div class="flex gap-4 pt-6 border-t border-gray-200">
+            <button type="submit" 
+                    class="flex-1 px-6 py-3 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition-colors font-semibold shadow-lg hover:shadow-xl">
+                💾 ذخیره دسته‌بندی
+            </button>
+            <a href="{% url 'dashboard:category_list' %}" 
+               class="px-6 py-3 bg-gray-100 text-gray-700 rounded-xl hover:bg-gray-200 transition-colors font-semibold">
+                انصراف
+            </a>
+        </div>
+    </form>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/lightbox2@2.11.4/dist/js/lightbox.min.js"></script>
+<script>
+    // Style all form inputs
+    document.querySelectorAll('input, select, textarea').forEach(function(input) {
+        if (input.type !== 'checkbox' && input.type !== 'file' && input.type !== 'hidden') {
+            input.classList.add('w-full', 'px-4', 'py-3', 'rounded-xl', 'border-2', 'border-gray-200', 'focus:border-indigo-500', 'focus:ring-2', 'focus:ring-indigo-200', 'outline-none', 'transition-all');
+        }
+    });
+</script>
+{% endblock %}

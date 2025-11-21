@@ -1,0 +1,113 @@
+{% extends 'dashboard/base_dashboard.html' %}
+{% load static %}
+{% load humanize %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/lightbox2@2.11.4/dist/css/lightbox.min.css">
+{{ block.super }}
+{% endblock %}
+
+{% block dashboard_content %}
+<div class="space-y-6">
+    <div class="flex items-center justify-between">
+        <div>
+            <h1 class="text-3xl font-bold text-gray-900 mb-2">🍽️ محصولات</h1>
+            <p class="text-gray-600">لیست آیتم‌های منوی فعال شما</p>
+        </div>
+        <a href="{% url 'dashboard:item_create' %}" 
+           class="px-6 py-3 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition-colors font-semibold shadow-lg hover:shadow-xl">
+            ➕ محصول جدید
+        </a>
+    </div>
+
+    {% if items %}
+    <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        {% for item in items %}
+        <div class="bg-white rounded-3xl shadow-lg hover:shadow-2xl transition-all overflow-hidden border-2 border-transparent hover:border-indigo-200">
+            <!-- Item Image -->
+            <div class="relative h-48 bg-gradient-to-br from-gray-100 to-gray-200 overflow-hidden">
+                {% if item.primary_image %}
+                <a href="{{ item.primary_image.url }}" data-lightbox="items" data-title="{{ item.name }}">
+                    <img src="{{ item.primary_image.url }}" alt="{{ item.name }}" 
+                         class="w-full h-full object-cover hover:scale-110 transition-transform duration-500 cursor-pointer">
+                </a>
+                {% else %}
+                <div class="w-full h-full flex items-center justify-center">
+                    <span class="text-6xl opacity-30">🍽️</span>
+                </div>
+                {% endif %}
+                {% if item.badge %}
+                <span class="absolute top-4 right-4 bg-gradient-to-r from-pink-500 to-rose-500 text-white px-3 py-1 rounded-full text-xs font-bold">
+                    {{ item.badge }}
+                </span>
+                {% endif %}
+                <div class="absolute top-4 left-4">
+                    {% if item.is_active %}
+                    <span class="bg-green-500 text-white px-3 py-1 rounded-full text-xs font-bold">✅ فعال</span>
+                    {% else %}
+                    <span class="bg-gray-400 text-white px-3 py-1 rounded-full text-xs font-bold">⏸️ متوقف</span>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Item Info -->
+            <div class="p-6">
+                <h3 class="text-xl font-bold text-gray-900 mb-2">{{ item.name }}</h3>
+                <p class="text-sm text-gray-500 mb-3">📁 {{ item.category.title }}</p>
+                <p class="text-gray-600 mb-4 line-clamp-2">{{ item.description|truncatewords:15|default:"بدون توضیحات" }}</p>
+                
+                <div class="flex items-center justify-between mb-4 pb-4 border-b border-gray-100">
+                    <span class="text-2xl font-bold text-indigo-600">{{ item.price|intcomma }}</span>
+                    <span class="text-sm text-gray-500">تومان</span>
+                </div>
+
+                <!-- Gallery Preview -->
+                {% if item.gallery.all %}
+                <div class="mb-4">
+                    <p class="text-xs text-gray-500 mb-2">🖼️ گالری ({{ item.gallery.count }} عکس)</p>
+                    <div class="flex gap-2 overflow-x-auto pb-2">
+                        {% for gallery_img in item.gallery.all|slice:":5" %}
+                        <a href="{{ gallery_img.image.url }}" data-lightbox="gallery-{{ item.id }}" data-title="{{ gallery_img.caption|default:item.name }}">
+                            <img src="{{ gallery_img.image.url }}" alt="{{ gallery_img.caption }}" 
+                                 class="w-16 h-16 rounded-lg object-cover hover:scale-110 transition-transform cursor-pointer border-2 border-gray-200">
+                        </a>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- Actions -->
+                <div class="flex gap-2">
+                    <a href="{% url 'dashboard:item_edit' item.pk %}" 
+                       class="flex-1 text-center px-4 py-2 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition-colors font-semibold">
+                        ✏️ ویرایش
+                    </a>
+                    <form method="post" action="{% url 'dashboard:item_delete' item.pk %}" 
+                          onsubmit="return confirm('آیا مطمئن هستید که می‌خواهید این محصول را حذف کنید؟');" 
+                          class="inline">
+                        {% csrf_token %}
+                        <button type="submit" 
+                                class="px-4 py-2 bg-red-100 text-red-700 rounded-xl hover:bg-red-200 transition-colors font-semibold">
+                            🗑️
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="bg-white rounded-3xl shadow-lg p-16 text-center">
+        <span class="text-8xl mb-4 block">🍽️</span>
+        <h2 class="text-2xl font-bold text-gray-900 mb-2">هنوز محصولی ثبت نشده است</h2>
+        <p class="text-gray-600 mb-6">شروع کنید و اولین محصول خود را اضافه کنید</p>
+        <a href="{% url 'dashboard:item_create' %}" 
+           class="inline-block px-8 py-4 bg-indigo-600 text-white rounded-2xl hover:bg-indigo-700 transition-colors font-semibold shadow-lg hover:shadow-xl">
+            ➕ افزودن محصول جدید
+        </a>
+    </div>
+    {% endif %}
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/lightbox2@2.11.4/dist/js/lightbox.min.js"></script>
+{% endblock %}

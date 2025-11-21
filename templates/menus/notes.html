@@ -1,0 +1,86 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}یادداشت‌های من{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+    <!-- Header -->
+    <div class="flex items-center justify-between mb-8">
+        <div>
+            <h1 class="text-4xl font-bold text-gray-900 mb-2 flex items-center gap-3">
+                <span>📝</span>
+                <span>یادداشت‌های من</span>
+            </h1>
+            <p class="text-gray-600">تمام یادداشت‌های شما در یکجا</p>
+        </div>
+        {% if note_items %}
+        <form method="post" action="{% url 'menu:notes_clear' %}" onsubmit="return confirm('آیا مطمئن هستید که می‌خواهید همه یادداشت‌ها را پاک کنید؟');">
+            {% csrf_token %}
+            <button type="submit" class="px-6 py-3 bg-red-100 text-red-700 rounded-xl hover:bg-red-200 transition-colors font-semibold">
+                🗑️ پاک کردن همه
+            </button>
+        </form>
+        {% endif %}
+    </div>
+
+    <!-- Notes Grid -->
+    {% if note_items %}
+    <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        {% for entry in note_items %}
+        <div class="bg-white rounded-3xl shadow-lg hover:shadow-2xl transition-all duration-300 overflow-hidden border-2 border-transparent hover:border-indigo-200 group">
+            <!-- Item Image -->
+            <div class="relative h-48 bg-gradient-to-br from-indigo-100 to-purple-100 overflow-hidden">
+                {% if entry.item.primary_image %}
+                <img src="{{ entry.item.primary_image.url }}" alt="{{ entry.item.name }}" 
+                     class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500">
+                {% else %}
+                <div class="w-full h-full flex items-center justify-center">
+                    <span class="text-7xl opacity-30">🍽️</span>
+                </div>
+                {% endif %}
+                <div class="absolute top-4 right-4 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full text-xs font-semibold text-indigo-600">
+                    {{ entry.item.category.business.name }}
+                </div>
+            </div>
+            
+            <!-- Note Content -->
+            <div class="p-6">
+                <h3 class="text-xl font-bold text-gray-900 mb-2">{{ entry.item.name }}</h3>
+                <p class="text-gray-500 text-sm mb-4">{{ entry.item.category.title }}</p>
+                
+                <div class="bg-indigo-50 rounded-2xl p-4 mb-4 border border-indigo-100">
+                    <p class="text-gray-700 leading-relaxed">{{ entry.note|default:"بدون یادداشت" }}</p>
+                </div>
+                
+                <div class="flex gap-2 pt-4 border-t border-gray-100">
+                    <a href="{% url 'menu:item_detail' entry.item.category.business.slug entry.item.slug %}" 
+                       class="flex-1 text-center px-4 py-2 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition-colors font-semibold">
+                        مشاهده محصول
+                    </a>
+                    <form method="post" action="{% url 'menu:remove_note' entry.item.category.business.slug entry.item.id %}" 
+                          onsubmit="return confirm('آیا مطمئن هستید؟');" class="inline">
+                        {% csrf_token %}
+                        <input type="hidden" name="next" value="{% url 'menu:notes' %}">
+                        <button type="submit" class="px-4 py-2 bg-red-100 text-red-700 rounded-xl hover:bg-red-200 transition-colors font-semibold">
+                            🗑️
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="text-center py-20 bg-white rounded-3xl shadow-lg">
+        <span class="text-9xl mb-6 block">📝</span>
+        <h2 class="text-3xl font-bold text-gray-900 mb-4">یادداشتی ثبت نشده است</h2>
+        <p class="text-gray-600 mb-8">شروع کنید و محصولات مورد علاقه خود را به یادداشت‌ها اضافه کنید</p>
+        <a href="{% url 'menu:home' %}" 
+           class="inline-block px-8 py-4 bg-indigo-600 text-white rounded-2xl hover:bg-indigo-700 transition-colors font-semibold shadow-lg hover:shadow-xl">
+            🏠 بازگشت به صفحه اصلی
+        </a>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,93 @@
+{% extends 'dashboard/base_dashboard.html' %}
+{% load static %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/lightbox2@2.11.4/dist/css/lightbox.min.css">
+{{ block.super }}
+{% endblock %}
+
+{% block dashboard_content %}
+<div class="space-y-6">
+    <div class="flex items-center justify-between">
+        <div>
+            <h1 class="text-3xl font-bold text-gray-900 mb-2">📁 دسته‌بندی‌ها</h1>
+            <p class="text-gray-600">دسته‌بندی‌ها ترتیب نمایش منو را مشخص می‌کنند</p>
+        </div>
+        <a href="{% url 'dashboard:category_create' %}" 
+           class="px-6 py-3 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition-colors font-semibold shadow-lg hover:shadow-xl">
+            ➕ دسته جدید
+        </a>
+    </div>
+
+    {% if categories %}
+    <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        {% for category in categories %}
+        <div class="bg-white rounded-3xl shadow-lg hover:shadow-2xl transition-all overflow-hidden border-2 border-transparent hover:border-indigo-200">
+            <!-- Category Image -->
+            <div class="relative h-48 bg-gradient-to-br from-indigo-100 to-purple-100 overflow-hidden">
+                {% if category.cover_image %}
+                <a href="{{ category.cover_image.url }}" data-lightbox="categories" data-title="{{ category.title }}">
+                    <img src="{{ category.cover_image.url }}" alt="{{ category.title }}" 
+                         class="w-full h-full object-cover hover:scale-110 transition-transform duration-500 cursor-pointer">
+                </a>
+                {% else %}
+                <div class="w-full h-full flex items-center justify-center">
+                    <span class="text-7xl opacity-30">📁</span>
+                </div>
+                {% endif %}
+                <div class="absolute top-4 left-4">
+                    {% if category.is_active %}
+                    <span class="bg-green-500 text-white px-3 py-1 rounded-full text-xs font-bold">✅ فعال</span>
+                    {% else %}
+                    <span class="bg-gray-400 text-white px-3 py-1 rounded-full text-xs font-bold">⏸️ متوقف</span>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Category Info -->
+            <div class="p-6">
+                <h3 class="text-xl font-bold text-gray-900 mb-2">{{ category.title }}</h3>
+                {% if category.description %}
+                <p class="text-gray-600 mb-4 line-clamp-2">{{ category.description }}</p>
+                {% endif %}
+                
+                <div class="flex items-center justify-between mb-4 pb-4 border-b border-gray-100">
+                    <span class="text-sm text-gray-500">ترتیب نمایش:</span>
+                    <span class="text-lg font-bold text-indigo-600">{{ category.order }}</span>
+                </div>
+
+                <!-- Actions -->
+                <div class="flex gap-2">
+                    <a href="{% url 'dashboard:category_edit' category.pk %}" 
+                       class="flex-1 text-center px-4 py-2 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition-colors font-semibold">
+                        ✏️ ویرایش
+                    </a>
+                    <form method="post" action="{% url 'dashboard:category_delete' category.pk %}" 
+                          onsubmit="return confirm('آیا مطمئن هستید که می‌خواهید این دسته‌بندی را حذف کنید؟');" 
+                          class="inline">
+                        {% csrf_token %}
+                        <button type="submit" 
+                                class="px-4 py-2 bg-red-100 text-red-700 rounded-xl hover:bg-red-200 transition-colors font-semibold">
+                            🗑️
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="bg-white rounded-3xl shadow-lg p-16 text-center">
+        <span class="text-8xl mb-4 block">📁</span>
+        <h2 class="text-2xl font-bold text-gray-900 mb-2">هنوز دسته‌بندی‌ای ثبت نشده است</h2>
+        <p class="text-gray-600 mb-6">شروع کنید و اولین دسته‌بندی خود را اضافه کنید</p>
+        <a href="{% url 'dashboard:category_create' %}" 
+           class="inline-block px-8 py-4 bg-indigo-600 text-white rounded-2xl hover:bg-indigo-700 transition-colors font-semibold shadow-lg hover:shadow-xl">
+            ➕ افزودن دسته‌بندی جدید
+        </a>
+    </div>
+    {% endif %}
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/lightbox2@2.11.4/dist/js/lightbox.min.js"></script>
+{% endblock %}

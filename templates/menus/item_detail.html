@@ -1,0 +1,279 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load menu_extras %}
+{% load humanize %}
+
+{% block title %}{{ item.name }} | {{ business.name }}{% endblock %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/lightbox2@2.11.4/dist/css/lightbox.min.css">
+{% endblock %}
+
+{% block content %}
+<!-- Breadcrumb -->
+<nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8">
+    <div class="flex items-center gap-2 text-sm text-gray-600">
+        <a href="{% url 'menu:home' %}" class="hover:text-indigo-600 transition-colors">خانه</a>
+        <span>/</span>
+        <a href="{% url 'menu:business_detail' business.slug %}" class="hover:text-indigo-600 transition-colors">{{ business.name }}</a>
+        <span>/</span>
+        <span class="text-gray-900 font-semibold">{{ item.name }}</span>
+    </div>
+</nav>
+
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div class="grid lg:grid-cols-2 gap-8 mb-12">
+        <!-- Image Gallery -->
+        <div class="space-y-4">
+            <div class="bg-white rounded-3xl shadow-xl overflow-hidden">
+                {% if item.primary_image %}
+                <a href="{{ item.primary_image.url }}" data-lightbox="gallery-{{ item.id }}" data-title="{{ item.name }}">
+                    <img src="{{ item.primary_image.url }}" alt="{{ item.name }}" 
+                         class="w-full h-96 object-cover hover:scale-105 transition-transform cursor-pointer">
+                </a>
+                {% else %}
+                <div class="w-full h-96 bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center">
+                    <span class="text-9xl opacity-30">🍽️</span>
+                </div>
+                {% endif %}
+            </div>
+            
+            <!-- Gallery Images -->
+            {% if item.gallery.all %}
+            <div>
+                <h3 class="text-lg font-bold text-gray-900 mb-3">🖼️ گالری عکس‌ها ({{ item.gallery.count }})</h3>
+                <div class="grid grid-cols-4 gap-3">
+                    {% for gallery_img in item.gallery.all %}
+                    <a href="{{ gallery_img.image.url }}" data-lightbox="gallery-{{ item.id }}" data-title="{{ gallery_img.caption|default:item.name }}">
+                        <div class="bg-white rounded-xl shadow-md overflow-hidden border-2 border-gray-200 hover:border-indigo-400 transition-all">
+                            <img src="{{ gallery_img.image.url }}" alt="{{ gallery_img.caption|default:item.name }}" 
+                                 class="w-full h-24 object-cover hover:scale-110 transition-transform cursor-pointer">
+                        </div>
+                    </a>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Item Details -->
+        <div class="space-y-6">
+            <div>
+                <div class="flex items-start justify-between mb-4">
+                    <h1 class="text-4xl font-bold text-gray-900">{{ item.name }}</h1>
+                    {% if item.badge %}
+                    <span class="bg-gradient-to-r from-pink-500 to-rose-500 text-white px-4 py-2 rounded-full text-sm font-bold shadow-lg">
+                        {{ item.badge }}
+                    </span>
+                    {% endif %}
+                </div>
+                <p class="text-lg text-gray-600 leading-relaxed">{{ item.description|default:"بدون توضیحات" }}</p>
+            </div>
+
+            <!-- Price -->
+            <div class="bg-gradient-to-r from-indigo-50 to-purple-50 rounded-3xl p-6 border-2 border-indigo-100">
+                <div class="flex items-center justify-between">
+                    <div>
+                        {% if item.special_price %}
+                        <div class="flex items-center gap-3">
+                            <span class="text-4xl font-bold text-indigo-600">{{ item.special_price|intcomma }}</span>
+                            <span class="text-xl text-gray-400 line-through">{{ item.price|intcomma }}</span>
+                        </div>
+                        {% elif item.discount_percent %}
+                        <div class="flex items-center gap-3">
+                            <span class="text-4xl font-bold text-indigo-600">{{ item.price|intcomma }}</span>
+                            <span class="bg-green-500 text-white px-3 py-1 rounded-full text-sm font-bold">
+                                {{ item.discount_percent }}% تخفیف
+                            </span>
+                        </div>
+                        {% else %}
+                        <span class="text-4xl font-bold text-indigo-600">{{ item.price|intcomma }}</span>
+                        {% endif %}
+                        <span class="text-gray-500 text-lg mr-2">تومان</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Additional Info -->
+            <div class="space-y-4">
+                {% if not item.is_full_time %}
+                <div class="bg-blue-50 rounded-2xl p-4 border border-blue-200">
+                    <p class="text-blue-700 font-semibold flex items-center gap-2">
+                        <span>⏰</span>
+                        <span>ساعات ارائه: {{ item.available_from }} تا {{ item.available_to }}</span>
+                    </p>
+                    <p class="text-blue-600 text-sm mt-1">روزها: {{ item.get_available_days_display }}</p>
+                </div>
+                {% endif %}
+
+                {% if item.ingredients %}
+                <div class="bg-gray-50 rounded-2xl p-4">
+                    <p class="text-gray-700 font-semibold mb-2 flex items-center gap-2">
+                        <span>🧾</span>
+                        <span>مواد تشکیل‌دهنده</span>
+                    </p>
+                    <p class="text-gray-600">{{ item.ingredients }}</p>
+                </div>
+                {% endif %}
+
+                {% if item.calories %}
+                <div class="bg-orange-50 rounded-2xl p-4 border border-orange-200">
+                    <p class="text-orange-700 font-semibold flex items-center gap-2">
+                        <span>🔥</span>
+                        <span>کالری: {{ item.calories }} کیلوکالری</span>
+                    </p>
+                </div>
+                {% endif %}
+
+                {% if item.tags %}
+                <div class="flex flex-wrap gap-2">
+                    {% for tag in item.tags.split|slice:":5" %}
+                    <span class="bg-indigo-100 text-indigo-700 px-3 py-1 rounded-full text-sm font-medium">
+                        #{{ tag }}
+                    </span>
+                    {% endfor %}
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Note Form -->
+            <div class="bg-white rounded-3xl shadow-lg p-6 border-2 border-gray-100">
+                <h3 class="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
+                    <span>📝</span>
+                    <span>یادداشت من</span>
+                </h3>
+                {% with has_note=notes|has_note:item.id note_value=notes|note_text:item.id %}
+                <form method="post" action="{% url 'menu:add_note' business.slug item.id %}" class="note-form-ajax">
+                    {% csrf_token %}
+                    <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                    <textarea name="note" rows="4" 
+                              placeholder="مثلا: دفعه بعد امتحانش کنم یا یادم باشه این رو سفارش بدم..."
+                              class="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 outline-none transition-all resize-none">{{ note_value|default:'' }}</textarea>
+                    <div class="flex gap-3 mt-4">
+                        <button type="submit" 
+                                class="flex-1 px-6 py-3 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition-colors font-semibold">
+                            💾 ذخیره یادداشت
+                        </button>
+                        {% if has_note %}
+                        <button type="button" 
+                                class="px-6 py-3 bg-red-100 text-red-700 rounded-xl hover:bg-red-200 transition-colors font-semibold note-remove-btn"
+                                data-remove-url="{% url 'menu:remove_note' business.slug item.id %}">
+                            🗑️ حذف
+                        </button>
+                        {% endif %}
+                    </div>
+                </form>
+                {% endwith %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Related Items -->
+    {% if related_items %}
+    <section class="mt-16">
+        <h2 class="text-3xl font-bold text-gray-900 mb-8 text-center">🍽️ محصولات مشابه</h2>
+        <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {% for related in related_items %}
+            <a href="{% url 'menu:item_detail' business.slug related.slug %}" 
+               class="group bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 overflow-hidden border-2 border-transparent hover:border-indigo-200">
+                <div class="relative overflow-hidden h-40 bg-gradient-to-br from-gray-100 to-gray-200">
+                    {% if related.primary_image %}
+                    <img src="{{ related.primary_image.url }}" alt="{{ related.name }}" 
+                         class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500">
+                    {% else %}
+                    <div class="w-full h-full flex items-center justify-center">
+                        <span class="text-5xl opacity-30">🍽️</span>
+                    </div>
+                    {% endif %}
+                </div>
+                <div class="p-4">
+                    <h3 class="font-bold text-gray-900 mb-2 line-clamp-1">{{ related.name }}</h3>
+                    <p class="text-gray-600 text-sm mb-3 line-clamp-2">{{ related.description|truncatewords:10|default:"بدون توضیحات" }}</p>
+                    <div class="flex items-center justify-between pt-3 border-t border-gray-100">
+                        <span class="text-lg font-bold text-indigo-600">{{ related.price|intcomma }}</span>
+                        <span class="text-xs text-gray-500">تومان</span>
+                    </div>
+                </div>
+            </a>
+            {% endfor %}
+        </div>
+    </section>
+    {% endif %}
+</div>
+
+<script>
+    // Note form AJAX handling
+    document.querySelector('.note-form-ajax')?.addEventListener('submit', async function(e) {
+        e.preventDefault();
+        const form = this;
+        const button = form.querySelector('button[type="submit"]');
+        const originalText = button.textContent;
+        
+        button.disabled = true;
+        button.textContent = '⏳ در حال ذخیره...';
+        
+        const formData = new FormData(form);
+        const response = await fetch(form.action, {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+            }
+        });
+        
+        if (response.ok) {
+            button.textContent = '✅ ذخیره شد!';
+            setTimeout(() => {
+                button.textContent = originalText;
+                button.disabled = false;
+            }, 2000);
+        } else {
+            button.textContent = '❌ خطا';
+            button.disabled = false;
+        }
+    });
+    
+    // Remove note button
+    document.querySelector('.note-remove-btn')?.addEventListener('click', async function() {
+        if (!confirm('آیا مطمئن هستید که می‌خواهید این یادداشت را حذف کنید؟')) {
+            return;
+        }
+        
+        const button = this;
+        const originalText = button.textContent;
+        button.disabled = true;
+        button.textContent = '⏳ در حال حذف...';
+        
+        const formData = new FormData();
+        formData.append('csrfmiddlewaretoken', document.querySelector('[name=csrfmiddlewaretoken]').value);
+        formData.append('next', window.location.pathname);
+        
+        const response = await fetch(button.dataset.removeUrl, {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+            }
+        });
+        
+        if (response.ok) {
+            button.textContent = '✅ حذف شد!';
+            document.querySelector('textarea[name="note"]').value = '';
+            setTimeout(() => {
+                button.remove();
+            }, 2000);
+        } else {
+            button.textContent = originalText;
+            button.disabled = false;
+        }
+    });
+</script>
+<script src="https://cdn.jsdelivr.net/npm/lightbox2@2.11.4/dist/js/lightbox.min.js"></script>
+<script>
+    lightbox.option({
+        'resizeDuration': 200,
+        'wrapAround': true,
+        'albumLabel': 'عکس %1 از %2'
+    });
+</script>
+{% endblock %}
